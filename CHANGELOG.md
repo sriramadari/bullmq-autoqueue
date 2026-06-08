@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Fix: Bull Board failed to load under ESM/dynamic-import consumers because the `@bull-board/api/bullMQAdapter` subpath is CJS-only and not ESM-resolvable. The dashboard packages are now loaded via `createRequire` (CJS resolution), resolved from the consumer's project. No API change.
+
 ## 0.1.0
 
 Initial release.
