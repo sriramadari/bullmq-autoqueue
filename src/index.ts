@@ -99,10 +99,5 @@ export async function loadQueues(options: LoadQueuesOptions): Promise<QueueRegis
     registry.bullBoardBasePath = basePath;
   }
 
-  logger.info(
-    `bullmq-autoqueue: loaded ${built.length} queue(s)` +
-      (built.length ? `: ${built.map((b) => b.name).join(", ")}` : ""),
-  );
-
   return registry;
 }
