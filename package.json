@@ -1,6 +1,6 @@
 {
   "name": "bullmq-autoqueue",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Convention-based BullMQ queue loader with an automatic Bull Board dashboard. Drop a folder with a processor, get a fully wired queue + worker + dashboard — no central registry to edit.",
   "keywords": [
     "bullmq",
@@ -36,6 +36,9 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
+  },
+  "bin": {
+    "bullmq-auto": "./dist/cli.js"
   },
   "files": [
     "dist",

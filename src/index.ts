@@ -9,6 +9,8 @@ import type { BuiltQueue, LoadQueuesOptions, QueueConfig, QueueDefinition } from
 export { QueueRegistry } from "./registry";
 export { installGracefulShutdown } from "./shutdown";
 export { toKebabCase } from "./naming";
+export { detectStyle, generateQueue, renderConfig, renderProcessor } from "./generate";
+export type { CodeStyle, GenerateOptions, GenerateResult } from "./generate";
 export type {
   BullBoardOptions,
   BuiltQueue,
