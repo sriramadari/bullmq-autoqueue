@@ -1,22 +1,9 @@
 import { Queue, Worker } from "bullmq";
 import type { ConnectionOptions } from "bullmq";
-import type { BuiltQueue, Logger, QueueDefaults, QueueDefinition, ResolvedDefaults } from "./types";
+import { resolveQueueSettings } from "./settings";
+import type { BuiltQueue, Logger, QueueDefinition, ResolvedDefaults } from "./types";
 
-const DEFAULTS: ResolvedDefaults = {
-  concurrency: 1,
-  defaultJobOptions: {},
-  readOnlyBoard: true,
-  autorun: true,
-};
-
-export function resolveDefaults(defaults: QueueDefaults | undefined): ResolvedDefaults {
-  return {
-    concurrency: defaults?.concurrency ?? DEFAULTS.concurrency,
-    defaultJobOptions: defaults?.defaultJobOptions ?? DEFAULTS.defaultJobOptions,
-    readOnlyBoard: defaults?.readOnlyBoard ?? DEFAULTS.readOnlyBoard,
-    autorun: defaults?.autorun ?? DEFAULTS.autorun,
-  };
-}
+export { resolveDefaults } from "./settings";
 
 interface BuildContext {
   connection: ConnectionOptions;
@@ -27,17 +14,18 @@ interface BuildContext {
 /** Instantiate a Queue + Worker from a definition and wire lifecycle logging. */
 export function buildQueue(def: QueueDefinition, ctx: BuildContext): BuiltQueue {
   const { connection, logger, defaults } = ctx;
+  const settings = resolveQueueSettings(def, defaults);
 
   const queue = new Queue(def.name, {
     connection,
-    defaultJobOptions: { ...defaults.defaultJobOptions, ...def.defaultJobOptions },
+    defaultJobOptions: settings.defaultJobOptions,
     ...def.queueOptions,
   });
 
   const worker = new Worker(def.name, def.processor, {
     connection,
-    concurrency: def.concurrency ?? defaults.concurrency,
-    autorun: def.autorun ?? defaults.autorun,
+    concurrency: settings.concurrency,
+    autorun: settings.autorun,
     ...def.workerOptions,
   });
 
@@ -56,6 +44,6 @@ export function buildQueue(def: QueueDefinition, ctx: BuildContext): BuiltQueue 
     name: def.name,
     queue,
     worker,
-    readOnlyBoard: def.readOnlyBoard ?? defaults.readOnlyBoard,
+    readOnlyBoard: settings.readOnlyBoard,
   };
 }

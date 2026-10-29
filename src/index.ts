@@ -1,16 +1,26 @@
 import { buildBullBoardRouter } from "./board";
+import { assertUniqueNames } from "./discover";
 import { buildQueue, resolveDefaults } from "./factory";
 import { loadDefinitionsFromDir } from "./loader";
 import { consoleLogger } from "./logger";
 import { toKebabCase } from "./naming";
 import { QueueRegistry } from "./registry";
-import type { BuiltQueue, LoadQueuesOptions, QueueConfig, QueueDefinition } from "./types";
+import type { BuiltQueue, LoadQueuesOptions, QueueDefinition } from "./types";
 
 export { QueueRegistry } from "./registry";
 export { installGracefulShutdown } from "./shutdown";
 export { toKebabCase } from "./naming";
 export { detectStyle, generateQueue, renderConfig, renderProcessor } from "./generate";
 export type { CodeStyle, GenerateOptions, GenerateResult } from "./generate";
+export {
+  assertUniqueNames,
+  defineConfig,
+  defineQueue,
+  discoverQueueFolders,
+  resolveQueueSettings,
+  toQueueDefinition,
+} from "./core";
+export type { DirEntry, DiscoveredQueue, ListDir, QueueSettings } from "./core";
 export type {
   BullBoardOptions,
   BuiltQueue,
@@ -21,29 +31,6 @@ export type {
   QueueDefinition,
 } from "./types";
 export type { ShutdownOptions } from "./shutdown";
-
-/** Identity helper that gives you full type-checking + IntelliSense on a queue definition. */
-export function defineQueue(def: QueueDefinition): QueueDefinition {
-  return def;
-}
-
-/** Identity helper for a queue folder's `config.{js,ts}` file. */
-export function defineConfig(config: QueueConfig): QueueConfig {
-  return config;
-}
-
-function assertNoDuplicates(definitions: QueueDefinition[]): void {
-  const seen = new Set<string>();
-  for (const def of definitions) {
-    if (seen.has(def.name)) {
-      throw new Error(
-        `bullmq-autoqueue: duplicate queue name "${def.name}". ` +
-          `Names must be unique across the scanned folder and explicit \`queues\`.`,
-      );
-    }
-    seen.add(def.name);
-  }
-}
 
 /**
  * Discover and wire up every queue, then hand back a {@link QueueRegistry}.
@@ -85,7 +72,7 @@ export async function loadQueues(options: LoadQueuesOptions): Promise<QueueRegis
       "bullmq-autoqueue: no queues found. Pass `dir` to scan a folder or `queues` for explicit definitions.",
     );
   }
-  assertNoDuplicates(definitions);
+  assertUniqueNames(definitions);
 
   const built: BuiltQueue[] = definitions.map((def) =>
     buildQueue(def, { connection: options.connection, logger, defaults }),

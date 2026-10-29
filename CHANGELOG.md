@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0
+
+- **New `bullmq-autoqueue/core` entry.** The folder convention, name derivation,
+  settings merge and scaffold templates, with no Node built-ins and no runtime
+  `bullmq` import. Use it to preview a queue layout in a browser, lint queue folders
+  in a build step, or drive the convention from a virtual file tree.
+- `discoverQueueFolders(root, listDir)` takes any directory lister; `loadQueues`
+  now uses it with `fs.readdir`, so discovery behaves exactly as before.
+- New exports: `discoverQueueFolders`, `toQueueDefinition`, `resolveQueueSettings`,
+  `assertUniqueNames` (also available from the main entry).
+- `prepare` script builds `dist/`, so the package can be installed straight from git.
+
 ## 0.2.0
 
 - **New: `bullmq-auto` CLI.** Scaffold a queue from the terminal — `npx bullmq-auto --generate "newqueue"` creates `queues/<name>/processor.*` (optionally `config.*` with `--config`). The generated folder is auto-discovered by the loader, so the queue, its worker, and the Bull Board entry register at startup with no central file to edit.

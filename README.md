@@ -178,6 +178,22 @@ Wires `SIGTERM`/`SIGINT` to `registry.closeAll()` before exit. Idempotent.
 - `defineQueue(def)` / `defineConfig(config)` — identity functions for full type-checking.
 - `toKebabCase(str)` — the default naming function, exported for reuse.
 
+### `bullmq-autoqueue/core`
+
+The convention logic on its own, with no Node built-ins and no runtime `bullmq` import, so it bundles for browsers, edge runtimes and build tools:
+
+| Export | Description |
+|--------|-------------|
+| `discoverQueueFolders(root, listDir, join?)` | Apply the folder convention using any directory lister (`fs.readdir`, a virtual tree, a manifest). |
+| `toQueueDefinition(found, processor, config, naming)` | Validate a folder's loaded modules and derive its queue name. |
+| `resolveQueueSettings(def, defaults)` | The concurrency, retries and board mode a queue will actually run with. |
+| `assertUniqueNames(defs)` | Throw on duplicate queue names. |
+| `renderProcessor` / `renderConfig` | The scaffold templates the CLI writes. |
+
+```ts
+import { discoverQueueFolders, resolveQueueSettings, resolveDefaults } from "bullmq-autoqueue/core";
+```
+
 ---
 
 ## Explicit (no-folder) usage

@@ -1,28 +1,9 @@
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { QueueConfig, QueueDefinition } from "./types";
-
-/** Runtime-resolvable script extensions, in resolution order. */
-const SCRIPT_EXTS = [".js", ".mjs", ".cjs", ".ts"];
-const PROCESSOR_BASE = "processor";
-const CONFIG_BASE = "config";
-const IGNORED_DIRS = new Set(["node_modules", "dist", "build", "coverage"]);
-
-interface DiscoveredQueue {
-  dir: string;
-  processorFile: string;
-  configFile: string | null;
-}
-
-function findFile(dir: string, base: string): string | null {
-  for (const ext of SCRIPT_EXTS) {
-    const candidate = join(dir, base + ext);
-    if (existsSync(candidate)) return candidate;
-  }
-  return null;
-}
+import { discoverQueueFolders, toQueueDefinition } from "./discover";
+import type { QueueDefinition } from "./types";
 
 /**
  * Resolve the default export of a module, tolerating both ESM (`export default`)
@@ -44,31 +25,9 @@ async function importDefault(file: string): Promise<unknown> {
   return mod;
 }
 
-/**
- * Walk `root`. A directory that directly contains a `processor.*` file is a
- * queue (we do not descend into it — its subfolders are private helpers). Any
- * other directory is a grouping folder and we descend into it. This handles
- * nested layouts like `queues/emailQueues/otpEmail/processor.js`.
- */
-async function discover(root: string): Promise<DiscoveredQueue[]> {
-  const found: DiscoveredQueue[] = [];
-
-  async function walk(dir: string): Promise<void> {
-    const processorFile = findFile(dir, PROCESSOR_BASE);
-    if (processorFile) {
-      found.push({ dir, processorFile, configFile: findFile(dir, CONFIG_BASE) });
-      return;
-    }
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      if (entry.name.startsWith(".") || IGNORED_DIRS.has(entry.name)) continue;
-      await walk(join(dir, entry.name));
-    }
-  }
-
-  await walk(root);
-  return found;
+async function listDir(dir: string) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  return entries.map((e) => ({ name: e.name, isDirectory: e.isDirectory() }));
 }
 
 /**
@@ -85,33 +44,13 @@ export async function loadDefinitionsFromDir(
     throw new Error(`bullmq-autoqueue: queue directory not found: ${root}`);
   }
 
-  const discovered = await discover(root);
+  const discovered = await discoverQueueFolders(root, listDir, join);
   const definitions: QueueDefinition[] = [];
 
-  for (const { dir, processorFile, configFile } of discovered) {
-    const processor = await importDefault(processorFile);
-    if (typeof processor !== "function") {
-      throw new Error(
-        `bullmq-autoqueue: ${processorFile} must default-export a processor function ` +
-          `(got ${typeof processor}).`,
-      );
-    }
-
-    let config: QueueConfig = {};
-    if (configFile) {
-      const loaded = await importDefault(configFile);
-      if (loaded && typeof loaded === "object") {
-        config = loaded as QueueConfig;
-      } else {
-        throw new Error(
-          `bullmq-autoqueue: ${configFile} must default-export a config object ` +
-            `(got ${typeof loaded}).`,
-        );
-      }
-    }
-
-    const name = config.name ?? naming(basename(dir));
-    definitions.push({ ...config, name, processor: processor as QueueDefinition["processor"] });
+  for (const found of discovered) {
+    const processor = await importDefault(found.processorFile);
+    const config = found.configFile ? await importDefault(found.configFile) : undefined;
+    definitions.push(toQueueDefinition(found, processor, config, naming));
   }
 
   return definitions;

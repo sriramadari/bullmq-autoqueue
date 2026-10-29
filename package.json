@@ -1,7 +1,7 @@
 {
   "name": "bullmq-autoqueue",
-  "version": "0.2.1",
-  "description": "Convention-based BullMQ queue loader with an automatic Bull Board dashboard. Drop a folder with a processor, get a fully wired queue + worker + dashboard — no central registry to edit.",
+  "version": "0.3.0",
+  "description": "Convention-based BullMQ queue loader with an automatic Bull Board dashboard. Drop a folder with a processor, get a fully wired queue + worker + dashboard \u2014 no central registry to edit.",
   "keywords": [
     "bullmq",
     "bull",
@@ -35,6 +35,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js",
+      "require": "./dist/core.cjs"
     }
   },
   "bin": {
@@ -54,7 +59,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build"
   },
   "peerDependencies": {
     "@bull-board/api": ">=5",
