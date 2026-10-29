@@ -83,6 +83,39 @@ Add a new queue later? Create one folder. That's the whole change.
 
 ---
 
+## What it does and how it helps
+
+**What it does**
+
+- **Folder convention.** Any folder that contains processor.js (or .mjs, .cjs, .ts) is a queue, named after the folder in kebab-case. An optional config file beside it overrides the name, concurrency or job options. Folders without a processor group queues and can nest.
+- **Full wiring.** Each queue gets a Queue and a Worker with your defaults merged under its own config, completed and failed logging, and an entry in one shared Bull Board router.
+- **Registry.** registry.add(name, job, data) enqueues by name and rejects unknown names; closeAll() and installGracefulShutdown() drain workers on SIGTERM and SIGINT.
+- **Scaffolder.** npx bullmq-auto --generate "send welcome sms" writes the folder in your project's style (CommonJS, ESM or TypeScript).
+- **bullmq-autoqueue/core.** The convention logic with no Node or bullmq imports, for previews, linting or build tools.
+
+**How it helps**
+
+| Before | With `bullmq-autoqueue` |
+|---|---|
+| A new queue touches the queue file, the worker file and the dashboard setup. | Create one folder. Nothing else changes. |
+| Retry settings are copy-pasted and drift between queues. | One set of defaults; a queue overrides only what it needs. |
+| A queue missing from Bull Board goes unnoticed for weeks. | The dashboard is built from the same list, so it can't fall out of sync. |
+| Two queues with the same name collide quietly in Redis. | Startup fails with a clear duplicate-name error. |
+
+**Use it when**
+
+- An Express (or any Node) service with several BullMQ queues.
+- Teams where many people add queues and a central file keeps conflicting.
+
+**Not the right tool for**
+
+- Single-queue apps, where plain BullMQ is simpler.
+- Queues created at runtime from data; pass those as explicit definitions instead.
+
+**How it works.** At startup loadQueues() walks the folder, imports each processor and config (ESM or CommonJS), validates them, merges settings over your defaults and builds the queues. Bull Board packages are optional peers, loaded only when the dashboard is on.
+
+---
+
 ## Install
 
 ```bash
